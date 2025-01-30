@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Cheapest Gas Prices</title>
+
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .station-name {
+            font-weight: bold;
+        }
+        #loading {
+            display: none; /* Hidden by default */
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container text-center">
+        <h1 class="mb-3">⛽ Find Cheapest Gas Prices</h1>
+
+        <!-- Search Box -->
+        <div class="input-group mb-3">
+            <input type="text" id="area_code" class="form-control" placeholder="Enter ZIP code" aria-label="ZIP Code">
+            <button class="btn btn-primary" onclick="searchGas()">Search</button>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="mt-3 text-primary">
+            <div class="spinner-border spinner-border-sm" role="status"></div> 
+            <span>Fetching gas prices...</span>
+        </div>
+
+        <!-- Results -->
+        <div id="result" class="mt-3"></div>
+    </div>
+
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        async function searchGas() {
+            let area_code = document.getElementById("area_code").value;
+            if (!area_code) {
+                alert("Please enter a ZIP code.");
+                return;
+            }
+
+            let resultDiv = document.getElementById("result");
+            let loadingDiv = document.getElementById("loading");
+
+            // Show loading indicator
+            loadingDiv.style.display = "block";
+            resultDiv.innerHTML = "";
+
+            try {
+                let response = await fetch(`/search?area_code=${area_code}`);
+
+                if (!response.ok) {
+                    resultDiv.innerHTML = `<div class="alert alert-danger">No data found.</div>`;
+                    return;
+                }
+
+                let data = await response.json();
+                resultDiv.innerHTML = "";
+
+                if (data.gas_prices && data.gas_prices.length > 0) {
+                    let list = `<ul class="list-group">`;
+                    data.gas_prices.forEach(station => {
+                        if (station.station && station.address && station.price) {
+                            list += `
+                                <li class="list-group-item">
+                                    <span class="station-name">${station.station}</span><br>
+                                    <small>${station.address}</small><br>
+                                    <strong class="text-success">$${station.price}</strong>
+                                </li>`;
+                        }
+                    });
+                    list += "</ul>";
+                    resultDiv.innerHTML = list;
+                } else {
+                    resultDiv.innerHTML = `<div class="alert alert-warning">No gas stations found for this ZIP code.</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="alert alert-danger">Error fetching data. Please try again.</div>`;
+            } finally {
+                // Hide loading indicator
+                loadingDiv.style.display = "none";
+            }
+        }
+    </script>
+
+</body>
+</html>
